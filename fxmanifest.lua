@@ -8,10 +8,12 @@ version '1.0.0'
 client_scripts {
     '@NativeUI/NativeUI.lua',
     'config.lua',
+    'functions.lua',
     'client.lua',
 }
 
 server_scripts {
+    '@oxmysql/lib/MySQL.lua',
     'server.lua',
 }
 
