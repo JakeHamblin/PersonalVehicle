@@ -9,7 +9,7 @@ AddEventHandler('getVehicles', function(name, score)
         ratelimit = GetGameTimer()
         
         -- Get Discord ID
-        local discordID = getIdentifier(source, "discord"):gsub("discord:", "")
+        local discordID = GetIdentifier(source, "discord"):gsub("discord:", "")
 
         -- Load file
         local loadFile = LoadResourceFile(GetCurrentResourceName(), "./vehicles.json")
@@ -39,7 +39,7 @@ AddEventHandler('getVehicles', function(name, score)
 end)
 
 -- Get's specified identifier from player
-function getIdentifier(src, identifier)
+function GetIdentifier(src, identifier)
 	local identifiers = GetPlayerIdentifiers(src)
 
 	for k,v in pairs(identifiers) do

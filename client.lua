@@ -40,6 +40,10 @@ AddEventHandler("postVehicles", function(ownedVehiclesRet, trustedVehiclesRet)
         local createdVehicle = NativeUI.CreateItem(v['name'], '')
         ownedVehicles:AddItem(createdVehicle)
         createdVehicle:RightLabel(v['spawncode'])
+
+        createdVehicle.Activated = function(ParentMenu, SelectedItem)
+            SpawnVehicle(v['spawncode'])
+        end
     end
 
     for k, v in pairs(trustedVehicles) do
