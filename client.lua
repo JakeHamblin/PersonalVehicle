@@ -71,7 +71,14 @@ AddEventHandler("postVehicles", function(ownedVehiclesRet, trustedVehiclesRet)
                 result = GetOnscreenKeyboardResult()
             end
 
-            print(result)
+            -- If result isn't nil, is a string, contains only digits, and is 17 or more digits
+            if result and type(result) == "string" and result:match("^%d+$") and #result >= 17 then
+                -- Convert user input to integer
+                local discordID = tonumber(result)
+
+                -- Trigger server event to trust vehicle to user
+                TriggerServerEvent("trustVehicle", v['name'], v['spawncode'], discordID)
+            end
         end
     end
 
