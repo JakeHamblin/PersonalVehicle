@@ -13,11 +13,11 @@ dependencies {
 client_scripts {
     '@NativeUI/NativeUI.lua',
     'config.lua',
-    'functions.lua',
-    'client.lua',
+    'client/functions.lua',
+    'client/client.lua',
 }
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
-    'server.lua',
+    'server/server.lua',
 }
