@@ -1,40 +1,59 @@
--- Special thanks to Woopi for documenting usage of JSON with FiveM
 local ratelimit = -1
+
+-- Event handler for database creation
+AddEventHandler('onResourceStart', function(resourceName)
+    if resourceName == GetCurrentResourceName() then
+        -- Create table insert
+        local createTable = {
+            [[CREATE TABLE IF NOT EXISTS `hamblin_vehicles` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `discordID` varchar(255) NOT NULL,
+            `owner` tinyint(1) NOT NULL COMMENT '0 = trusted, 1 = owner',
+            `name` varchar(255) NOT NULL,
+            `spawncode` varchar(255) NOT NULL,
+            PRIMARY KEY (`id`)
+            )]],
+        }
+
+        -- Create table if needed
+        MySQL.transaction.await(createTable, nil)
+    end
+end)
 
 -- Event to get allowed and trusted vehicles
 RegisterNetEvent('getVehicles')
-AddEventHandler('getVehicles', function(name, score)
+AddEventHandler('getVehicles', function()
     if (ratelimit + 60000) < GetGameTimer() or ratelimit == -1 then
         -- Update rate limit
         ratelimit = GetGameTimer()
-        
-        -- Get Discord ID
-        local discordID = GetIdentifier(source, "discord"):gsub("discord:", "")
 
-        -- Load file
-        local loadFile = LoadResourceFile(GetCurrentResourceName(), "./vehicles.json")
-        local extract = json.decode(loadFile)
+        -- Retain triggering user
+        local src = source
+
+        -- Initalize return tables
         local ownedVehicles = {}
         local trustedVehicles = {}
+        
+        -- Get Discord ID
+        local discordID = GetIdentifier(src, "discord"):gsub("discord:", "")
 
-        -- Loop through owned vehicles
-        for k,v in pairs(extract['owned']) do
-            -- Find matches
-            if v['discord'] == discordID then
-                ownedVehicles[#ownedVehicles] = {name = v['name'], spawncode = v['spawncode']}
-            end
-        end
+        -- Get all vehicles assigned to Discord ID
+        local response = MySQL.query.await('SELECT `owner`, `name`, `spawncode` FROM `hamblin_vehicles` WHERE `discordID` = ?', {discordID})
 
-        -- Loop through trusted vehicles
-        for k,v in pairs(extract['trusted']) do
-            -- Find matches
-            if v['discord'] == discordID then
-                trustedVehicles[#trustedVehicles] = {name = v['name'], spawncode = v['spawncode']}
+        if response then
+            for i = 1, #response do
+                -- If user is owner, add to owned vehicles
+                if response[i].owner then
+                    table.insert(ownedVehicles, {name = response[i].name, spawncode = response[i].spawncode})
+                -- If user is trusted, add to trusted vehicles
+                else
+                    table.insert(trustedVehicles, {name = response[i].name, spawncode = response[i].spawncode})
+                end
             end
         end
 
         -- Return vehicles to client
-        TriggerClientEvent("postVehicles", source, ownedVehicles, trustedVehicles)
+        TriggerClientEvent("postVehicles", src, ownedVehicles, trustedVehicles)
     end
 end)
 

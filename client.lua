@@ -1,5 +1,3 @@
--- https://github.com/Sc0ttM/SEM_InteractionMenu/blob/master/menu.lua
-
 _menuPool = NativeUI.CreatePool()
 mainMenu = NativeUI.CreateMenu("Personal Vehicle", "Spawn your personal vehicles")
 _menuPool:Add(mainMenu)
@@ -15,7 +13,7 @@ _menuPool:RefreshIndex()
 RegisterCommand(Config.Command, function(source, args, rawCommands)
     TriggerServerEvent('getVehicles')
     mainMenu:Visible(not mainMenu:Visible())
-end)
+end, false)
 
 RegisterNetEvent("postVehicles")
 AddEventHandler("postVehicles", function(ownedVehiclesRet, trustedVehiclesRet)
@@ -28,26 +26,74 @@ AddEventHandler("postVehicles", function(ownedVehiclesRet, trustedVehiclesRet)
     -- Add new menus
     ownedVehicles = _menuPool:AddSubMenu(mainMenu, "Owned Vehicles", "All of the vehicles you own", true)
     trustedVehicles = _menuPool:AddSubMenu(mainMenu, "Trusted Vehicles", "All of the vehicles you are trusted to", true)
+    
+    -- Loop through all owned vehicles
+    for _, v in pairs(ownedVehiclesRet) do
+        -- Add new submenu for owned vehicle
+        local ownerMenu = _menuPool:AddSubMenu(ownedVehicles, v['name'], "", true)
+
+        -- Create spawn button
+        local spawnVehicle = NativeUI.CreateItem("Spawn Vehicle", '')
+        ownerMenu:AddItem(spawnVehicle)
+        spawnVehicle:RightLabel(v['spawncode'])
+
+        -- When spawn clicked
+        spawnVehicle.Activated = function(parentMenu, selectedItem)
+            -- Spawn Vehicle
+            SpawnVehicle(v['spawncode'])
+        end
+
+        -- Create trust button
+        local trustVehicle = NativeUI.CreateItem("Trust Vehicle", '')
+        ownerMenu:AddItem(trustVehicle)
+        trustVehicle:RightLabel('')
+
+        -- When vehicle trust clicked
+        trustVehicle.Activated = function(parentMenu, selectedItem)
+            -- Input from user
+            local result = nil
+            
+            -- Add a text entry for text area label
+            AddTextEntry("discord_id_select", "Please enter a Discord ID to trust the vehicle to:")
+
+            -- Display text area
+            DisplayOnscreenKeyboard(1, "discord_id_select", "", "", "", "", "", 256 + 1)
+
+            -- While text area is still open
+            while(UpdateOnscreenKeyboard() == 0) do
+                DisableAllControlActions(0);
+                Wait(0);
+            end
+
+            -- If result is not nil
+            if(GetOnscreenKeyboardResult()) then
+                -- Place result into result
+                result = GetOnscreenKeyboardResult()
+            end
+
+            print(result)
+        end
+    end
+
+    -- Loop through all trusted vehicles
+    for _, v in pairs(trustedVehicles) do
+        -- Create spawn button
+        local spawnVehicle = NativeUI.CreateItem("Spawn Vehicle", '')
+        trustedVehicles:AddItem(spawnVehicle)
+        spawnVehicle:RightLabel(v['spawncode'])
+
+        -- When spawn click
+        spawnVehicle.Activated = function(parentMenu, selectedItem)
+            -- Spawn vehicle
+            SpawnVehicle(v['spawncode'])
+        end
+    end
 
     -- Update menu
     _menuPool:ControlDisablingEnabled(false)
     _menuPool:MouseControlsEnabled(false)
     _menuPool:RefreshIndex()
     _menuPool:ProcessMenus()
-    
-    -- Loop through all owned vehicles
-    for k, v in pairs(ownedVehiclesRet) do
-        local createdVehicle = NativeUI.CreateItem(v['name'], '')
-        ownedVehicles:AddItem(createdVehicle)
-        createdVehicle:RightLabel(v['spawncode'])
-
-        createdVehicle.Activated = function(ParentMenu, SelectedItem)
-            SpawnVehicle(v['spawncode'])
-        end
-    end
-
-    for k, v in pairs(trustedVehicles) do
-    end
 
     -- Show menu
     mainMenu:Visible(not mainMenu:Visible())
