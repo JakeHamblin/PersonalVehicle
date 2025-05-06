@@ -76,7 +76,7 @@ AddEventHandler("postVehicles", function(ownedVehiclesRet, trustedVehiclesRet)
     end
 
     -- Loop through all trusted vehicles
-    for _, v in pairs(trustedVehicles) do
+    for _, v in pairs(trustedVehiclesRet) do
         -- Create spawn button
         local spawnVehicle = NativeUI.CreateItem("Spawn Vehicle", '')
         trustedVehicles:AddItem(spawnVehicle)
