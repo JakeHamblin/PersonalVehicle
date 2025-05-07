@@ -12,7 +12,8 @@ AddEventHandler('onResourceStart', function(resourceName)
             `name` varchar(255) NOT NULL,
             `spawncode` varchar(255) NOT NULL,
             PRIMARY KEY (`id`),
-            UNIQUE KEY unique_user_entry (discordID, owner, spawncode)
+            UNIQUE KEY unique_user_entry (discordID, owner, spawncode),
+            UNIQUE KEY unique_vehicle_owner (owner, spawncode)
             )]],
         }
 
@@ -20,6 +21,42 @@ AddEventHandler('onResourceStart', function(resourceName)
         MySQL.transaction.await(createTable, nil)
     end
 end)
+
+-- Add personal vehicle to player
+RegisterCommand("addPrivateVehicle", function(source, args, raw)
+    -- Save source
+    local src = source
+
+    if #args < 3 then return end
+    if IsPlayerAceAllowed(source, "JakeHamblin.AddPrivateVehicle") then
+        -- Get arguments
+        local discordID = StripSpaces(args[1])
+        local spawncode = StripSpaces(args[2])
+
+        -- Remove Discord ID and spawncode from args
+        local name = args
+        table.remove(name, 1)
+        table.remove(name, 1)
+
+        -- Concatenate remaining args (the name) by space
+        name = StripSpaces(table.concat(name, " "))
+
+        -- Insert into database
+        local id = MySQL.insert.await('INSERT INTO `hamblin_vehicles` (discordID, owner, name, spawncode) VALUES (?, 1, ?, ?) ON DUPLICATE KEY UPDATE discordID = discordID', {discordID, name, spawncode})
+
+        -- Check if insert successful
+        if id then
+            SendMessage(src, "Private vehicle added")
+        else
+            SendMessage(src, "Error while adding private vehicle")
+        end
+
+        -- Update restricted vehicles for everyone
+        TriggerEvent('updateRestrictedVehicles')
+    else
+        SendMessage(src, "Not allowed to add private vehicles")
+    end
+end, false)
 
 -- Event to update restricted vehicles for all users on database changes
 RegisterNetEvent('updateRestrictedVehicles')
@@ -91,15 +128,44 @@ AddEventHandler('trustVehicle', function(discordID, name, spawncode)
 
         -- Check if insert successful
         if id then
-            TriggerClientEvent('trustVehicle', src, true)
+            TriggerClientEvent('trustActionStatus', src, 'trust', true)
         else
-            TriggerClientEvent('trustVehicle', src, false)
+            TriggerClientEvent('trustActionStatus', src, 'trust', false)
         end
     else
-        TriggerClientEvent('trustVehicle', src, false)
+        TriggerClientEvent('trustActionStatus', src, 'trust', false)
     end
 
-    TriggerServerEvent('updateRestrictedVehicles')
+    -- Update restricted vehicles for everyone
+    TriggerEvent('updateRestrictedVehicles')
+end)
+
+RegisterNetEvent('untrustVehicle')
+AddEventHandler('untrustVehicle', function(discordID, spawncode)
+    -- Save source
+    local src = source
+    local triggeringDiscordID = GetIdentifier(src, "discord"):gsub("discord:", "")
+
+    -- Check if triggering user is owner
+    local response = MySQL.query.await('SELECT COUNT(*) AS count FROM `hamblin_vehicles` WHERE discordID = ? AND owner = 1 AND spawncode = ?', {triggeringDiscordID, spawncode})
+
+    -- Response valid and count is 1 or greater
+    if response and response[1].count >= 1 then
+        -- Insert into database
+        local response = MySQL.query.await('DELETE FROM `hamblin_vehicles` WHERE discordID = ? AND owner = 0 AND spawncode = ?', {discordID, spawncode})
+
+        -- Check if insert successful
+        if response then
+            TriggerClientEvent('trustActionStatus', src, 'untrust', true)
+        else
+            TriggerClientEvent('trustActionStatus', src, 'untrust', false)
+        end
+    else
+        TriggerClientEvent('trustActionStatus', src, 'untrust', false)
+    end
+
+    -- Update restricted vehicles for everyone
+    TriggerEvent('updateRestrictedVehicles')
 end)
 
 -- Get's specified identifier from player
@@ -111,4 +177,17 @@ function GetIdentifier(src, identifier)
 			return v
 		end
 	end
+end
+
+-- Function to send chat message
+function SendMessage(src, message)
+    TriggerClientEvent('chat:addMessage', src, {
+        color = {0, 0, 0},
+        multiline = true,
+        args = {'[Personal Vehicle]', message},
+    })
+end
+
+function StripSpaces(str)
+    return string.gsub(str, "^%s+", "")
 end

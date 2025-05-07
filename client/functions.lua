@@ -79,3 +79,29 @@ end
 function DeleteVehicle(entity)
     Citizen.InvokeNative( 0xEA386986E786A54F, Citizen.PointerValueIntInitialized(entity))
 end
+
+-- Get user input from prompt
+function GetUserInput(text)
+    -- Input from user
+    local result = nil
+        
+    -- Add a text entry for text area label
+    AddTextEntry("user_input", text)
+
+    -- Display text area
+    DisplayOnscreenKeyboard(1, "user_input", "", "", "", "", "", 256 + 1)
+
+    -- While text area is still open
+    while(UpdateOnscreenKeyboard() == 0) do
+        DisableAllControlActions(0);
+        Wait(0);
+    end
+
+    -- If result is not nil
+    if(GetOnscreenKeyboardResult()) then
+        -- Place result into result
+        result = GetOnscreenKeyboardResult()
+    end
+
+    return result
+end

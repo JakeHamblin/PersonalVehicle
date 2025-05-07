@@ -5,8 +5,8 @@ _menuPool:ControlDisablingEnabled(false)
 _menuPool:MouseControlsEnabled(false)
 
 -- Create submenus
-local ownedVehiclesMenus = _menuPool:AddSubMenu(mainMenu, "Owned Vehicles", "All of the vehicles you own", true)
-local trustedVehiclesMenus = _menuPool:AddSubMenu(mainMenu, "Trusted Vehicles", "All of the vehicles you are trusted to", true)
+local ownedVehiclesMenus = nil
+local trustedVehiclesMenus = nil
 _menuPool:RefreshIndex()
 
 -- Vehicle checking
@@ -28,7 +28,12 @@ end)
 
 RegisterNetEvent('postVehicles')
 AddEventHandler('postVehicles', function(ownedVehiclesMenusRet, trustedVehiclesMenusRet)
-    -- Create new mnu
+    -- Close all menus
+    _menuPool:CloseAllMenus()
+    _menuPool:RefreshIndex()
+    _menuPool:ProcessMenus()
+
+    -- Create new menu
     mainMenu = NativeUI.CreateMenu("Personal Vehicle", "Spawn your personal vehicles")
 
     -- Add menu to pool
@@ -67,25 +72,7 @@ AddEventHandler('postVehicles', function(ownedVehiclesMenusRet, trustedVehiclesM
         -- When vehicle trust clicked
         trustVehicle.Activated = function(parentMenu, selectedItem)
             -- Input from user
-            local result = nil
-            
-            -- Add a text entry for text area label
-            AddTextEntry("discord_id_select", "Please enter a Discord ID to trust the vehicle to:")
-
-            -- Display text area
-            DisplayOnscreenKeyboard(1, "discord_id_select", "", "", "", "", "", 256 + 1)
-
-            -- While text area is still open
-            while(UpdateOnscreenKeyboard() == 0) do
-                DisableAllControlActions(0);
-                Wait(0);
-            end
-
-            -- If result is not nil
-            if(GetOnscreenKeyboardResult()) then
-                -- Place result into result
-                result = GetOnscreenKeyboardResult()
-            end
+            local result = GetUserInput("Please enter a Discord ID to trust the vehicle to:")
 
             -- If result isn't nil, is a string, contains only digits, and is 17 or more digits
             if result and type(result) == "string" and result:match("^%d+$") and #result >= 17 then
@@ -94,6 +81,26 @@ AddEventHandler('postVehicles', function(ownedVehiclesMenusRet, trustedVehiclesM
 
                 -- Trigger server event to trust vehicle to user
                 TriggerServerEvent('trustVehicle', discordID, v['name'], v['spawncode'])
+            end
+        end
+
+        -- Create untrust button
+        local untrustVehicle = NativeUI.CreateItem("Untrust Vehicle", '')
+        ownerMenu:AddItem(untrustVehicle)
+        untrustVehicle:RightLabel('')
+
+        -- When vehicle trust clicked
+        untrustVehicle.Activated = function(parentMenu, selectedItem)
+            -- Input from user
+            local result = GetUserInput("Please enter a Discord ID to untrust from the vehicle:")
+
+            -- If result isn't nil, is a string, contains only digits, and is 17 or more digits
+            if result and type(result) == "string" and result:match("^%d+$") and #result >= 17 then
+                -- Convert user input to integer
+                local discordID = tonumber(result)
+
+                -- Trigger server event to trust vehicle to user
+                TriggerServerEvent('untrustVehicle', discordID, v['spawncode'])
             end
         end
     end
@@ -125,19 +132,19 @@ AddEventHandler('postVehicles', function(ownedVehiclesMenusRet, trustedVehiclesM
     mainMenu:Visible(not mainMenu:Visible())
 end)
 
-RegisterNetEvent('trustVehicle')
-AddEventHandler('trustVehicle', function(success)
+RegisterNetEvent('trustActionStatus')
+AddEventHandler('trustActionStatus', function(type, success)
     if success then
         TriggerEvent('chat:addMessage', {
             multiline = true,
             color = {0, 0, 0},
-            args = {'Personal Vehicle', 'User has been trusted'},
+            args = {'[Personal Vehicle]', 'User has been '..type..'ed'},
         })
     else
         TriggerEvent('chat:addMessage', {
             multiline = true,
             color = {0, 0, 0},
-            args = {'Personal Vehicle', 'Error while trusting user'},
+            args = {'[Personal Vehicle]', 'Error while '..type..'ing user'},
         })
     end
 end)
