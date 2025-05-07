@@ -28,6 +28,9 @@ You can simply use a database viewer like [HeidiSQL](https://www.heidisql.com/) 
 - **name** (`str`):      Name of the vehicle
 - **spawncode** (`str`): Spawncode of the vehicle
 
+## This script doesn't have a feature I want or has a bug. What should I do?
+Firstly, please <ins>**don't**</ins> contact me directly. While I appreciate that you are using my resource, I am a regular personal with a job and am currently going to college. Go to the [issues](https://github.com/JakeHamblin/PersonalVehicle/issues) tab for this repository and create an issue. This allows me to track specific issues or feature requests, branch off and complete them, and show why a specific change was made. <ins>This is how GitHub is supposed to be used.</ins>
+
 
 <br><br><p align="center">
  <img src="https://jakehamblin.com/images/hosturly.png">
