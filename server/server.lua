@@ -23,7 +23,7 @@ AddEventHandler('onResourceStart', function(resourceName)
 end)
 
 -- Add personal vehicle to player
-RegisterCommand("addPrivateVehicle", function(source, args, raw)
+RegisterCommand(Config.SetVehicleOwnerCommand, function(source, args, raw)
     -- Save source
     local src = source
 

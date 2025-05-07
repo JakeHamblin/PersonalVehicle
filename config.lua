@@ -1,4 +1,5 @@
 Config = {}
 
-Config.Command = "personalvehicle"
+Config.OpenMenuCommand = "personalVehicle"
+Config.SetVehicleOwnerCommand = "addPersonalVehicle"
 Config.Button = "F10"

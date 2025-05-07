@@ -16,16 +16,18 @@ local lastVehicleChecked = nil
 TriggerServerEvent('updateRestrictedVehicles')
 
 -- Create command to open menu
-RegisterCommand(Config.Command, function(source, args, rawCommands)
+RegisterCommand(Config.OpenMenuCommand, function(source, args, rawCommands)
     TriggerServerEvent('getVehicles')
     mainMenu:Visible(not mainMenu:Visible())
 end, false)
 
+-- Update restricted vehicles on database change
 RegisterNetEvent('updateRestrictedVehicles')
 AddEventHandler('updateRestrictedVehicles', function(vehicles)
     restrictedVehicles = vehicles
 end)
 
+-- Get vehicles that user is allowed to use
 RegisterNetEvent('postVehicles')
 AddEventHandler('postVehicles', function(ownedVehiclesMenusRet, trustedVehiclesMenusRet)
     -- Close all menus
@@ -132,6 +134,7 @@ AddEventHandler('postVehicles', function(ownedVehiclesMenusRet, trustedVehiclesM
     mainMenu:Visible(not mainMenu:Visible())
 end)
 
+-- Show chat message from trust event
 RegisterNetEvent('trustActionStatus')
 AddEventHandler('trustActionStatus', function(type, success)
     if success then
@@ -151,7 +154,12 @@ end)
 
 -- Add chat suggestion and process menus
 Citizen.CreateThread(function()
-    TriggerEvent('chat:addSuggestion', '/' .. Config.Command, 'Toggle Personal Vehicle Menu')
+    TriggerEvent('chat:addSuggestion', '/' .. Config.OpenMenuCommand, 'Toggle Personal Vehicle Menu')
+    TriggerEvent('chat:addSuggestion', '/' .. Config.SetVehicleOwnerCommand, 'Toggle Personal Vehicle Menu', {
+        {name = "Discord ID", help = "Discord ID to add personal vehicle to"},
+        {name = "Spawncode", help = "Spawn code of personal vehicle to add"},
+        {name = "Vehicle Name", help = "Name of personal vehicle to add"}
+    })
     while true do
         Citizen.Wait(0)
         _menuPool:ProcessMenus()
@@ -193,4 +201,4 @@ end)
 
 -- Create keymapping for predefined button
 -- NOTE: This mapping can be changed by the user via their keybinds
-RegisterKeyMapping(Config.Command, 'Personal Vehicle Menu', 'keyboard', Config.Button)
+RegisterKeyMapping(Config.OpenMenuCommand, 'Personal Vehicle Menu', 'keyboard', Config.Button)
