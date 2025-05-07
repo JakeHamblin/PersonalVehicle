@@ -77,13 +77,15 @@ end)
 
 -- Event to get allowed and trusted vehicles
 RegisterNetEvent('Hamblin:getVehicles')
-AddEventHandler('Hamblin:getVehicles', function()
-    if not ratelimit[source] or (ratelimit[source] + 60000) < GetGameTimer() then
-        -- Update rate limit
-        ratelimit[source] = GetGameTimer()
+AddEventHandler('Hamblin:getVehicles', function(remoteTrigger)
+    if remoteTrigger or (not ratelimit[source] or (ratelimit[source] + 10000) < GetGameTimer()) then
+        if not remoteTrigger then
+            -- Update rate limit
+            ratelimit[source] = GetGameTimer()
+        end
 
         -- Retain triggering user
-        local src = source
+        local src = remoteTrigger and remoteTrigger or source
 
         -- Initalize return tables
         local ownedVehicles = {}
@@ -142,6 +144,9 @@ AddEventHandler('Hamblin:trustVehicle', function(discordID, name, spawncode)
 
         -- Update restricted vehicles for everyone
         TriggerEvent('Hamblin:updateRestrictedVehicles')
+
+        -- Update allowed vehicles for trusted user
+        TriggerEvent('Hamblin:updateAllowedVehicles', discordID)
     end
 end)
 
@@ -173,6 +178,23 @@ AddEventHandler('Hamblin:untrustVehicle', function(discordID, spawncode)
 
         -- Update restricted vehicles for everyone
         TriggerEvent('Hamblin:updateRestrictedVehicles')
+
+        -- Update allowed vehicles for untrusted user
+        TriggerEvent('Hamblin:updateAllowedVehicles', discordID)
+    end
+end)
+
+-- Event to update user's trusted vehicles
+RegisterNetEvent('Hamblin:updateAllowedVehicles')
+AddEventHandler('Hamblin:updateAllowedVehicles', function(discordID)
+    for _, v in ipairs(GetPlayers()) do
+        local identifiers = GetPlayerIdentifiers(v)
+
+        for _, k in pairs(identifiers) do
+            if k == "discord:"..tostring(discordID) then
+                TriggerEvent('Hamblin:getVehicles', v)
+            end
+        end
     end
 end)
 
@@ -180,7 +202,7 @@ end)
 function GetIdentifier(src, identifier)
 	local identifiers = GetPlayerIdentifiers(src)
 
-	for k,v in pairs(identifiers) do
+	for _, v in pairs(identifiers) do
 		if string.sub(v, 1, string.len(identifier..":")) == identifier..":" then
 			return v
 		end
