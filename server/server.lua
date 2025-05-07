@@ -92,22 +92,25 @@ AddEventHandler('getVehicles', function()
         -- Get Discord ID
         local discordID = GetIdentifier(src, "discord"):gsub("discord:", "")
 
-        -- Get all vehicles assigned to Discord ID
-        local response = MySQL.query.await('SELECT `owner`, `name`, `spawncode` FROM `hamblin_vehicles` WHERE `discordID` = ?', {discordID})
-        if response then
-            for i = 1, #response do
-                -- If user is owner, add to owned vehicles
-                if response[i].owner then
-                    table.insert(ownedVehicles, {name = response[i].name, spawncode = response[i].spawncode})
-                -- If user is trusted, add to trusted vehicles
-                else
-                    table.insert(trustedVehicles, {name = response[i].name, spawncode = response[i].spawncode})
+        -- If Discord ID is valid
+        if discordID then
+            -- Get all vehicles assigned to Discord ID
+            local response = MySQL.query.await('SELECT `owner`, `name`, `spawncode` FROM `hamblin_vehicles` WHERE `discordID` = ?', {discordID})
+            if response then
+                for i = 1, #response do
+                    -- If user is owner, add to owned vehicles
+                    if response[i].owner then
+                        table.insert(ownedVehicles, {name = response[i].name, spawncode = response[i].spawncode})
+                    -- If user is trusted, add to trusted vehicles
+                    else
+                        table.insert(trustedVehicles, {name = response[i].name, spawncode = response[i].spawncode})
+                    end
                 end
             end
-        end
 
-        -- Return vehicles to client
-        TriggerClientEvent('postVehicles', src, ownedVehicles, trustedVehicles)
+            -- Return vehicles to client
+            TriggerClientEvent('postVehicles', src, ownedVehicles, trustedVehicles)
+        end
     end
 end)
 
@@ -117,26 +120,28 @@ AddEventHandler('trustVehicle', function(discordID, name, spawncode)
     local src = source
     local triggeringDiscordID = GetIdentifier(src, "discord"):gsub("discord:", "")
 
-    -- Check if triggering user is owner
-    local response = MySQL.query.await('SELECT COUNT(*) AS count FROM `hamblin_vehicles` WHERE discordID = ? AND owner = 1 AND spawncode = ?', {triggeringDiscordID, spawncode})
+    if triggeringDiscordID then
+        -- Check if triggering user is owner
+        local response = MySQL.query.await('SELECT COUNT(*) AS count FROM `hamblin_vehicles` WHERE discordID = ? AND owner = 1 AND spawncode = ?', {triggeringDiscordID, spawncode})
 
-    -- Response valid and count is 1 or greater
-    if response and response[1].count >= 1 then
-        -- Insert into database
-        local id = MySQL.insert.await('INSERT INTO `hamblin_vehicles` (discordID, owner, name, spawncode) VALUES (?, 0, ?, ?) ON DUPLICATE KEY UPDATE discordID = discordID', {discordID, name, spawncode})
+        -- Response valid and count is 1 or greater
+        if response and response[1].count >= 1 then
+            -- Insert into database
+            local id = MySQL.insert.await('INSERT INTO `hamblin_vehicles` (discordID, owner, name, spawncode) VALUES (?, 0, ?, ?) ON DUPLICATE KEY UPDATE discordID = discordID', {discordID, name, spawncode})
 
-        -- Check if insert successful
-        if id then
-            TriggerClientEvent('trustActionStatus', src, 'trust', true)
+            -- Check if insert successful
+            if id then
+                TriggerClientEvent('trustActionStatus', src, 'trust', true)
+            else
+                TriggerClientEvent('trustActionStatus', src, 'trust', false)
+            end
         else
             TriggerClientEvent('trustActionStatus', src, 'trust', false)
         end
-    else
-        TriggerClientEvent('trustActionStatus', src, 'trust', false)
-    end
 
-    -- Update restricted vehicles for everyone
-    TriggerEvent('updateRestrictedVehicles')
+        -- Update restricted vehicles for everyone
+        TriggerEvent('updateRestrictedVehicles')
+    end
 end)
 
 RegisterNetEvent('untrustVehicle')
@@ -145,26 +150,28 @@ AddEventHandler('untrustVehicle', function(discordID, spawncode)
     local src = source
     local triggeringDiscordID = GetIdentifier(src, "discord"):gsub("discord:", "")
 
-    -- Check if triggering user is owner
-    local response = MySQL.query.await('SELECT COUNT(*) AS count FROM `hamblin_vehicles` WHERE discordID = ? AND owner = 1 AND spawncode = ?', {triggeringDiscordID, spawncode})
+    if triggeringDiscordID then
+        -- Check if triggering user is owner
+        local response = MySQL.query.await('SELECT COUNT(*) AS count FROM `hamblin_vehicles` WHERE discordID = ? AND owner = 1 AND spawncode = ?', {triggeringDiscordID, spawncode})
 
-    -- Response valid and count is 1 or greater
-    if response and response[1].count >= 1 then
-        -- Insert into database
-        local response = MySQL.query.await('DELETE FROM `hamblin_vehicles` WHERE discordID = ? AND owner = 0 AND spawncode = ?', {discordID, spawncode})
+        -- Response valid and count is 1 or greater
+        if response and response[1].count >= 1 then
+            -- Insert into database
+            local response = MySQL.query.await('DELETE FROM `hamblin_vehicles` WHERE discordID = ? AND owner = 0 AND spawncode = ?', {discordID, spawncode})
 
-        -- Check if insert successful
-        if response then
-            TriggerClientEvent('trustActionStatus', src, 'untrust', true)
+            -- Check if insert successful
+            if response then
+                TriggerClientEvent('trustActionStatus', src, 'untrust', true)
+            else
+                TriggerClientEvent('trustActionStatus', src, 'untrust', false)
+            end
         else
             TriggerClientEvent('trustActionStatus', src, 'untrust', false)
         end
-    else
-        TriggerClientEvent('trustActionStatus', src, 'untrust', false)
-    end
 
-    -- Update restricted vehicles for everyone
-    TriggerEvent('updateRestrictedVehicles')
+        -- Update restricted vehicles for everyone
+        TriggerEvent('updateRestrictedVehicles')
+    end
 end)
 
 -- Get's specified identifier from player
