@@ -12,8 +12,7 @@ AddEventHandler('onResourceStart', function(resourceName)
             `name` varchar(255) NOT NULL,
             `spawncode` varchar(255) NOT NULL,
             PRIMARY KEY (`id`),
-            UNIQUE KEY unique_user_entry (discordID, owner, spawncode),
-            UNIQUE KEY unique_vehicle_owner (owner, spawncode)
+            UNIQUE KEY unique_user_entry (discordID, spawncode)
             )]],
         }
 
