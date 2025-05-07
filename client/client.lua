@@ -172,15 +172,18 @@ Citizen.CreateThread(function()
             -- Get vehicle they are in
             local vehicle = GetVehiclePedIsUsing(ped)
 
-            -- Set variable for determining if needed to be deleted
-            local allowed = false
-
             -- If ped is in driver seat and vehicle has not previously been approved
             if GetPedInVehicleSeat(vehicle, -1) == ped and lastVehicleChecked ~= GetEntityModel(vehicle) then
+                -- Set variable for determining if needed to be deleted
+                local allowed = true
+
                 -- Loop through all restricted vehicles
                 for _, v in pairs(restrictedVehicles) do
                     -- If vehicle is restricted
                     if GetHashKey(v) == GetEntityModel(vehicle) then
+                        -- Default allowed to false
+                        allowed = false
+                        
                         -- Loop through allowed vehicles
                         for _, i in pairs(allowedVehicles) do
                             -- If vehicle is allowed, add override
