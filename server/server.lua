@@ -1,4 +1,4 @@
-local ratelimit = -1
+local ratelimit = {}
 
 -- Event handler for database creation
 AddEventHandler('onResourceStart', function(resourceName)
@@ -51,15 +51,15 @@ RegisterCommand(Config.SetVehicleOwnerCommand, function(source, args, raw)
         end
 
         -- Update restricted vehicles for everyone
-        TriggerEvent('updateRestrictedVehicles')
+        TriggerEvent('Hamblin:updateRestrictedVehicles')
     else
         SendMessage(src, "Not allowed to add private vehicles")
     end
 end, false)
 
 -- Event to update restricted vehicles for all users on database changes
-RegisterNetEvent('updateRestrictedVehicles')
-AddEventHandler('updateRestrictedVehicles', function()
+RegisterNetEvent('Hamblin:updateRestrictedVehicles')
+AddEventHandler('Hamblin:updateRestrictedVehicles', function()
     -- Create table for restricted vehicles
     local restrictedVehicles = {}
 
@@ -72,15 +72,15 @@ AddEventHandler('updateRestrictedVehicles', function()
     end
 
     -- Send updated list to all clients
-    TriggerClientEvent("updateRestrictedVehicles", -1, restrictedVehicles)
+    TriggerClientEvent("Hamblin:updateRestrictedVehicles", -1, restrictedVehicles)
 end)
 
 -- Event to get allowed and trusted vehicles
-RegisterNetEvent('getVehicles')
-AddEventHandler('getVehicles', function()
-    if (ratelimit + 60000) < GetGameTimer() or ratelimit == -1 then
+RegisterNetEvent('Hamblin:getVehicles')
+AddEventHandler('Hamblin:getVehicles', function()
+    if not ratelimit[source] or (ratelimit[source] + 60000) < GetGameTimer() then
         -- Update rate limit
-        ratelimit = GetGameTimer()
+        ratelimit[source] = GetGameTimer()
 
         -- Retain triggering user
         local src = source
@@ -109,14 +109,14 @@ AddEventHandler('getVehicles', function()
             end
 
             -- Return vehicles to client
-            TriggerClientEvent('postVehicles', src, ownedVehicles, trustedVehicles)
+            TriggerClientEvent('Hamblin:postVehicles', src, ownedVehicles, trustedVehicles)
         end
     end
 end)
 
 -- Event to add trusted user
-RegisterNetEvent('trustVehicle')
-AddEventHandler('trustVehicle', function(discordID, name, spawncode)
+RegisterNetEvent('Hamblin:trustVehicle')
+AddEventHandler('Hamblin:trustVehicle', function(discordID, name, spawncode)
     -- Save source
     local src = source
     local triggeringDiscordID = GetIdentifier(src, "discord"):gsub("discord:", "")
@@ -132,22 +132,22 @@ AddEventHandler('trustVehicle', function(discordID, name, spawncode)
 
             -- Check if insert successful
             if id then
-                TriggerClientEvent('trustActionStatus', src, 'trust', true)
+                TriggerClientEvent('Hamblin:trustActionStatus', src, 'trust', true)
             else
-                TriggerClientEvent('trustActionStatus', src, 'trust', false)
+                TriggerClientEvent('Hamblin:trustActionStatus', src, 'trust', false)
             end
         else
-            TriggerClientEvent('trustActionStatus', src, 'trust', false)
+            TriggerClientEvent('Hamblin:trustActionStatus', src, 'trust', false)
         end
 
         -- Update restricted vehicles for everyone
-        TriggerEvent('updateRestrictedVehicles')
+        TriggerEvent('Hamblin:updateRestrictedVehicles')
     end
 end)
 
 -- Event to remove trusted user
-RegisterNetEvent('untrustVehicle')
-AddEventHandler('untrustVehicle', function(discordID, spawncode)
+RegisterNetEvent('Hamblin:untrustVehicle')
+AddEventHandler('Hamblin:untrustVehicle', function(discordID, spawncode)
     -- Save source
     local src = source
     local triggeringDiscordID = GetIdentifier(src, "discord"):gsub("discord:", "")
@@ -163,16 +163,16 @@ AddEventHandler('untrustVehicle', function(discordID, spawncode)
 
             -- Check if insert successful
             if response then
-                TriggerClientEvent('trustActionStatus', src, 'untrust', true)
+                TriggerClientEvent('Hamblin:trustActionStatus', src, 'untrust', true)
             else
-                TriggerClientEvent('trustActionStatus', src, 'untrust', false)
+                TriggerClientEvent('Hamblin:trustActionStatus', src, 'untrust', false)
             end
         else
-            TriggerClientEvent('trustActionStatus', src, 'untrust', false)
+            TriggerClientEvent('Hamblin:trustActionStatus', src, 'untrust', false)
         end
 
         -- Update restricted vehicles for everyone
-        TriggerEvent('updateRestrictedVehicles')
+        TriggerEvent('Hamblin:updateRestrictedVehicles')
     end
 end)
 

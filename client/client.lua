@@ -13,23 +13,23 @@ _menuPool:RefreshIndex()
 local restrictedVehicles = {}
 local allowedVehicles = {}
 local lastVehicleChecked = nil
-TriggerServerEvent('updateRestrictedVehicles')
+TriggerServerEvent('Hamblin:updateRestrictedVehicles')
 
 -- Create command to open menu
 RegisterCommand(Config.OpenMenuCommand, function(source, args, rawCommands)
-    TriggerServerEvent('getVehicles')
+    TriggerServerEvent('Hamblin:getVehicles')
     mainMenu:Visible(not mainMenu:Visible())
 end, false)
 
 -- Update restricted vehicles on database change
-RegisterNetEvent('updateRestrictedVehicles')
-AddEventHandler('updateRestrictedVehicles', function(vehicles)
+RegisterNetEvent('Hamblin:updateRestrictedVehicles')
+AddEventHandler('Hamblin:updateRestrictedVehicles', function(vehicles)
     restrictedVehicles = vehicles
 end)
 
 -- Get vehicles that user is allowed to use
-RegisterNetEvent('postVehicles')
-AddEventHandler('postVehicles', function(ownedVehiclesMenusRet, trustedVehiclesMenusRet)
+RegisterNetEvent('Hamblin:postVehicles')
+AddEventHandler('Hamblin:postVehicles', function(ownedVehiclesMenusRet, trustedVehiclesMenusRet)
     -- Close all menus
     _menuPool:CloseAllMenus()
     _menuPool:RefreshIndex()
@@ -78,11 +78,8 @@ AddEventHandler('postVehicles', function(ownedVehiclesMenusRet, trustedVehiclesM
 
             -- If result isn't nil, is a string, contains only digits, and is 17 or more digits
             if result and type(result) == "string" and result:match("^%d+$") and #result >= 17 then
-                -- Convert user input to integer
-                local discordID = tonumber(result)
-
                 -- Trigger server event to trust vehicle to user
-                TriggerServerEvent('trustVehicle', discordID, v['name'], v['spawncode'])
+                TriggerServerEvent('Hamblin:trustVehicle', result, v['name'], v['spawncode'])
             end
         end
 
@@ -98,11 +95,8 @@ AddEventHandler('postVehicles', function(ownedVehiclesMenusRet, trustedVehiclesM
 
             -- If result isn't nil, is a string, contains only digits, and is 17 or more digits
             if result and type(result) == "string" and result:match("^%d+$") and #result >= 17 then
-                -- Convert user input to integer
-                local discordID = tonumber(result)
-
                 -- Trigger server event to trust vehicle to user
-                TriggerServerEvent('untrustVehicle', discordID, v['spawncode'])
+                TriggerServerEvent('Hamblin:untrustVehicle', result, v['spawncode'])
             end
         end
     end
@@ -135,8 +129,8 @@ AddEventHandler('postVehicles', function(ownedVehiclesMenusRet, trustedVehiclesM
 end)
 
 -- Show chat message from trust event
-RegisterNetEvent('trustActionStatus')
-AddEventHandler('trustActionStatus', function(type, success)
+RegisterNetEvent('Hamblin:trustActionStatus')
+AddEventHandler('Hamblin:trustActionStatus', function(type, success)
     if success then
         TriggerEvent('chat:addMessage', {
             multiline = true,
@@ -160,12 +154,21 @@ Citizen.CreateThread(function()
         {name = "Spawncode", help = "Spawn code of personal vehicle to add"},
         {name = "Vehicle Name", help = "Name of personal vehicle to add"}
     })
+    TriggerServerEvent('Hamblin:getVehicles')
     while true do
         Citizen.Wait(0)
         _menuPool:ProcessMenus()
+    end
+end)
 
+-- Check for restricted vehicle usage
+Citizen.CreateThread(function()
+    while true do
         -- Get player ped
         local ped = GetPlayerPed(-1)
+
+        -- Delay to prevent accidental delete
+        Citizen.Wait(100)
         
         -- See if ped is in a vehicle
         if IsPedInAnyVehicle(ped, false) then
