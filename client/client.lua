@@ -177,9 +177,13 @@ Citizen.CreateThread(function()
 
             -- If ped is in driver seat and vehicle has not previously been approved
             if GetPedInVehicleSeat(vehicle, -1) == ped and lastVehicleChecked ~= GetEntityModel(vehicle) then
+                -- Loop through all restricted vehicles
                 for _, v in pairs(restrictedVehicles) do
+                    -- If vehicle is restricted
                     if GetHashKey(v) == GetEntityModel(vehicle) then
+                        -- Loop through allowed vehicles
                         for _, i in pairs(allowedVehicles) do
+                            -- If vehicle is allowed, add override
                             if GetHashKey(i) == GetEntityModel(vehicle) then
                                 allowed = true
                                 lastVehicleChecked = GetEntityModel(vehicle)
@@ -191,7 +195,7 @@ Citizen.CreateThread(function()
                 if not allowed then
                     -- Take control of vehicle
                     SetEntityAsMissionEntity(vehicle, true, true)
-
+                    
                     DeleteVehicle(vehicle)
                 end
             end

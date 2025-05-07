@@ -114,6 +114,7 @@ AddEventHandler('getVehicles', function()
     end
 end)
 
+-- Event to add trusted user
 RegisterNetEvent('trustVehicle')
 AddEventHandler('trustVehicle', function(discordID, name, spawncode)
     -- Save source
@@ -144,6 +145,7 @@ AddEventHandler('trustVehicle', function(discordID, name, spawncode)
     end
 end)
 
+-- Event to remove trusted user
 RegisterNetEvent('untrustVehicle')
 AddEventHandler('untrustVehicle', function(discordID, spawncode)
     -- Save source
@@ -196,6 +198,7 @@ function SendMessage(src, message)
     })
 end
 
+-- Function to strip spaces to the left of string
 function StripSpaces(str)
     return string.gsub(str, "^%s+", "")
 end
