@@ -18,7 +18,8 @@ TriggerServerEvent('Hamblin:updateRestrictedVehicles')
 -- Create command to open menu
 RegisterCommand(Config.OpenMenuCommand, function(source, args, rawCommands)
     TriggerServerEvent('Hamblin:getVehicles')
-    mainMenu:Visible(not mainMenu:Visible())
+    mainMenu:Visible(true)
+    _menuPool:ProcessMenus()
 end, false)
 
 -- Update restricted vehicles on database change
@@ -30,6 +31,9 @@ end)
 -- Get vehicles that user is allowed to use
 RegisterNetEvent('Hamblin:postVehicles')
 AddEventHandler('Hamblin:postVehicles', function(ownedVehiclesMenusRet, trustedVehiclesMenusRet)
+    -- Get current vehicle menu state
+    local showMenu = mainMenu:Visible()
+
     -- Close all menus
     _menuPool:CloseAllMenus()
     _menuPool:RefreshIndex()
@@ -45,6 +49,7 @@ AddEventHandler('Hamblin:postVehicles', function(ownedVehiclesMenusRet, trustedV
     ownedVehiclesMenus = _menuPool:AddSubMenu(mainMenu, "Owned Vehicles", "All of the vehicles you own", true)
     trustedVehiclesMenus = _menuPool:AddSubMenu(mainMenu, "Trusted Vehicles", "All of the vehicles you are trusted to", true)
 
+    lastVehicleChecked = nil
     allowedVehicles = {}
     
     -- Loop through all owned vehicles
@@ -125,7 +130,7 @@ AddEventHandler('Hamblin:postVehicles', function(ownedVehiclesMenusRet, trustedV
     _menuPool:ProcessMenus()
 
     -- Show menu
-    mainMenu:Visible(not mainMenu:Visible())
+    mainMenu:Visible(showMenu)
 end)
 
 -- Show chat message from trust event
@@ -168,7 +173,7 @@ Citizen.CreateThread(function()
         local ped = GetPlayerPed(-1)
 
         -- Delay to prevent accidental delete
-        Citizen.Wait(100)
+        Citizen.Wait(1000)
         
         -- See if ped is in a vehicle
         if IsPedInAnyVehicle(ped, false) then
@@ -184,6 +189,7 @@ Citizen.CreateThread(function()
                 for _, v in pairs(restrictedVehicles) do
                     -- If vehicle is restricted
                     if GetHashKey(v) == GetEntityModel(vehicle) then
+                        print("Found restricted vehicle")
                         -- Default allowed to false
                         allowed = false
                         
@@ -191,6 +197,7 @@ Citizen.CreateThread(function()
                         for _, i in pairs(allowedVehicles) do
                             -- If vehicle is allowed, add override
                             if GetHashKey(i) == GetEntityModel(vehicle) then
+                                print("Gave override")
                                 allowed = true
                                 lastVehicleChecked = GetEntityModel(vehicle)
                             end
