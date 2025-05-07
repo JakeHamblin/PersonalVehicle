@@ -189,7 +189,6 @@ Citizen.CreateThread(function()
                 for _, v in pairs(restrictedVehicles) do
                     -- If vehicle is restricted
                     if GetHashKey(v) == GetEntityModel(vehicle) then
-                        print("Found restricted vehicle")
                         -- Default allowed to false
                         allowed = false
                         
@@ -197,7 +196,6 @@ Citizen.CreateThread(function()
                         for _, i in pairs(allowedVehicles) do
                             -- If vehicle is allowed, add override
                             if GetHashKey(i) == GetEntityModel(vehicle) then
-                                print("Gave override")
                                 allowed = true
                                 lastVehicleChecked = GetEntityModel(vehicle)
                             end
