@@ -176,6 +176,8 @@ function GetIdentifier(src, identifier)
 			return v
 		end
 	end
+
+    return nil
 end
 
 -- Function to send chat message
